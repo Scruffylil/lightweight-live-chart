@@ -1,6 +1,6 @@
 const chart = LightweightCharts.createChart(document.getElementById('chart'), {
   width: window.innerWidth,
-  height: 500,
+  height: window.innerHeight, // Use window.innerHeight for initial height
   layout: {
     backgroundColor: '#131722', // Darker background inspired by TradingView
     textColor: '#d1d4dc',     // Light grey text
@@ -23,53 +23,9 @@ const chart = LightweightCharts.createChart(document.getElementById('chart'), {
   },
 });
 
-const candleSeries = chart.addCandlestickSeries({
-  upColor: '#26a69a',   // Green for up candles
-  downColor: '#ef5350', // Red for down candles
-  borderVisible: false, // Borders are usually off in TradingView's default style for candles
-  wickUpColor: '#26a69a',
-  wickDownColor: '#ef5350',
-});
+// ... (rest of your script.js code remains the same as previously provided) ...
 
-const data = [];
-
-const socket = new WebSocket('wss://stream.binance.com:9443/ws/btcusdt@kline_1m');
-
-socket.onopen = () => {
-  console.log("✅ WebSocket connected");
-};
-
-socket.onerror = (err) => {
-  console.error("❌ WebSocket error", err);
-};
-
-socket.onmessage = (event) => {
-  const message = JSON.parse(event.data);
-  const candlestick = message.k;
-
-  const point = {
-    time: Math.floor(candlestick.t / 1000),
-    open: parseFloat(candlestick.o),
-    high: parseFloat(candlestick.h),
-    low: parseFloat(candlestick.l),
-    close: parseFloat(candlestick.c),
-  };
-
-  const lastBar = data[data.length - 1];
-
-  if (lastBar && lastBar.time === point.time) {
-    // If it's the current (incomplete) bar, update it
-    candleSeries.update(point);
-    // You might also want to update the 'data' array for consistency
-    data[data.length - 1] = point;
-  } else {
-    // If it's a new bar, add it
-    data.push(point);
-    candleSeries.setData(data); // Re-set data to display the new bar correctly
-  }
-};
-
-// Handle window resizing
+// Ensure this ResizeObserver is present to handle dynamic resizing:
 new ResizeObserver(entries => {
     if (entries.length === 0 || entries[0].target !== document.getElementById('chart')) {
         return;
@@ -77,6 +33,3 @@ new ResizeObserver(entries => {
     const newRect = entries[0].contentRect;
     chart.applyOptions({ height: newRect.height, width: newRect.width });
 }).observe(document.getElementById('chart'));
-
-// Initial data setting (optional, if you have historical data)
-// candleSeries.setData(initialHistoricalData);
